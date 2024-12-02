@@ -10,17 +10,17 @@ project.ext {
 
     majorVersionNum = 0
     minorVersionNum = 0
-    patchVersionNum = 2
+    patchVersionNum = 3
     suffix = "-alpha"
 
-    versionCode = 2
+    versionCode = 3
 
     versionName = majorVersionNum + "." + minorVersionNum + "." + patchVersionNum + "-" + suffix
 }
 
 android {
     namespace groupId + '.' + artifactId
-    compileSdk 35
+    compileSdk 34
 
     defaultConfig {
         minSdk 21
