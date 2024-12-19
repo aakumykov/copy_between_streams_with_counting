@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "copy_between_streams_with_counting_demo"
+rootProject.name = "copy_between_streams_with_counting"
 include ':app'
 include ':copy_between_streams_with_counting'
