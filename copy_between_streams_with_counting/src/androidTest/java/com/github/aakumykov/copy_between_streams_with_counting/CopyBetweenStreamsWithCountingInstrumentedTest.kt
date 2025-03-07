@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
@@ -167,7 +168,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
 
 
     @Test
-    fun when_use_copyFromSourceToTarget_when_callback_methods_are_invoked_right_times() {
+    fun when_copyBetweenStreamsWithCounting_when_callback_methods_are_invoked_right_times() {
 
         val bufferSize = 1
         var readingCallbackInvokesCount = 0
@@ -192,6 +193,23 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
         // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.
         assertEquals(readingCallbackInvokesCount, sourceFileSize)
         assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
+    }
+
+
+    @Test
+    fun when_copyBetweenStreamsWithCounting_when_finish_callback_is_invoked() {
+
+        val finishIsInvoked = AtomicBoolean(false)
+
+        copyBetweenStreamsWithCounting(
+            inputStream = sourceStream,
+            outputStream = targetFileStream,
+            finishCallback = { readBytesCount, writeBytesCount ->
+                finishIsInvoked.set(true)
+            }
+        )
+
+        assertTrue(finishIsInvoked.get())
     }
 
 

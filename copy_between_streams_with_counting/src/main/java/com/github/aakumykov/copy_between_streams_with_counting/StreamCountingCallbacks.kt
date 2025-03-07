@@ -9,4 +9,8 @@ interface StreamCountingCallbacks {
     fun interface WritingCallback {
         fun onWriteCountChanged(count: Long)
     }
+
+    fun interface FinishCallback {
+        fun onFinished(readBytesCount: Long, writeBytesCount: Long)
+    }
 }

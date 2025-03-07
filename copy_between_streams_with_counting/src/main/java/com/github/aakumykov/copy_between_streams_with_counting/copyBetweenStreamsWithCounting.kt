@@ -1,10 +1,13 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
-import com.github.aakumykov.copy_between_streams_with_counting.StreamCountingCallbacks
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
+/**
+ * @param finishCallback Вызывается по завершении копирования,
+ * возвращает количество прочитанных/записанных байт.
+ */
 @Throws(IOException::class)
 fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
@@ -12,23 +15,29 @@ fun copyBetweenStreamsWithCounting(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     readingCallback: StreamCountingCallbacks.ReadingCallback? = null,
     writingCallback: StreamCountingCallbacks.WritingCallback? = null,
+    finishCallback: StreamCountingCallbacks.FinishCallback? = null,
 ) {
     val dataBuffer = ByteArray(bufferSize)
-    var readBytes: Int
-    var totalBytes: Long = 0
+    var bytesChunk: Int
+    var totalReadBytes: Long = 0
+    var totalWrittenBytes: Long = 0
 
     while (true) {
-        readBytes = inputStream.read(dataBuffer)
+        bytesChunk = inputStream.read(dataBuffer)
 
-        if (-1 == readBytes)
+        if (-1 == bytesChunk) {
+            finishCallback?.onFinished(totalReadBytes, totalWrittenBytes)
             return
+        }
 
-        totalBytes += readBytes
+        totalReadBytes += bytesChunk
 
-        readingCallback?.onReadCountChanged(totalBytes) // FIXME: Long -> Int
+        readingCallback?.onReadCountChanged(totalReadBytes) // FIXME: Long -> Int
 
-        outputStream.write(dataBuffer, 0, readBytes)
+        outputStream.write(dataBuffer, 0, bytesChunk)
 
-        writingCallback?.onWriteCountChanged(totalBytes) // FIXME: Long -> Int
+        totalWrittenBytes += bytesChunk
+
+        writingCallback?.onWriteCountChanged(totalWrittenBytes) // FIXME: Long -> Int
     }
 }
