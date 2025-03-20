@@ -17,8 +17,8 @@ suspend fun copyBetweenStreamsWithCountingSuspend(
     inputStream: InputStream,
     outputStream: OutputStream,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    readingCallback: StreamCountingCallbacks.ReadingCallback? = null,
-    writingCallback: StreamCountingCallbacks.WritingCallback? = null,
+    readingCallback: ((Long) -> Unit)? = null,
+    writingCallback: ((Long) -> Unit)? = null,
 ): Pair<Long,Long> {
     return suspendCancellableCoroutine<Pair<Long,Long>> { cancelableContinuation: CancellableContinuation<Pair<Long,Long>> ->
 
@@ -46,11 +46,11 @@ suspend fun copyBetweenStreamsWithCountingSuspend(
                 break
             }
             totalReadBytes += readPortionOfBytes
-            readingCallback?.onReadCountChanged(totalReadBytes) // FIXME: Long -> Int
+            readingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
 
             outputStream.write(dataBuffer, 0, readPortionOfBytes)
             totalWriteBytes += readPortionOfBytes
-            writingCallback?.onWriteCountChanged(totalReadBytes) // FIXME: Long -> Int
+            writingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
         }
     }
 }

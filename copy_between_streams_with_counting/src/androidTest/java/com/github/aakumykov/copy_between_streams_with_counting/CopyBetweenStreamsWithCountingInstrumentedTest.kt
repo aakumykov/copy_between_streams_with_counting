@@ -178,16 +178,8 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
             inputStream = sourceStream,
             outputStream = targetFileStream,
             bufferSize = bufferSize,
-            readingCallback = object: StreamCountingCallbacks.ReadingCallback {
-                override fun onReadCountChanged(count: Long) {
-                    readingCallbackInvokesCount++
-                }
-            },
-            writingCallback = object: StreamCountingCallbacks.WritingCallback {
-                override fun onWriteCountChanged(count: Long) {
-                    writingCallbackInvokesCount++
-                }
-            }
+            readingCallback = { readingCallbackInvokesCount++ },
+            writingCallback = { writingCallbackInvokesCount++ }
         )
 
         // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.

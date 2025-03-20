@@ -13,9 +13,9 @@ fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    readingCallback: StreamCountingCallbacks.ReadingCallback? = null,
-    writingCallback: StreamCountingCallbacks.WritingCallback? = null,
-    finishCallback: StreamCountingCallbacks.FinishCallback? = null,
+    readingCallback: ((Long) -> Unit)? = null,
+    writingCallback: ((Long) -> Unit)? = null,
+    finishCallback: ((Long,Long) -> Unit)? = null,
 ) {
     val dataBuffer = ByteArray(bufferSize)
     var bytesChunk: Int
@@ -26,18 +26,18 @@ fun copyBetweenStreamsWithCounting(
         bytesChunk = inputStream.read(dataBuffer)
 
         if (-1 == bytesChunk) {
-            finishCallback?.onFinished(totalReadBytes, totalWrittenBytes)
+            finishCallback?.invoke(totalReadBytes, totalWrittenBytes)
             return
         }
 
         totalReadBytes += bytesChunk
 
-        readingCallback?.onReadCountChanged(totalReadBytes) // FIXME: Long -> Int
+        readingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
 
         outputStream.write(dataBuffer, 0, bytesChunk)
 
         totalWrittenBytes += bytesChunk
 
-        writingCallback?.onWriteCountChanged(totalWrittenBytes) // FIXME: Long -> Int
+        writingCallback?.invoke(totalWrittenBytes) // FIXME: Long -> Int
     }
 }
