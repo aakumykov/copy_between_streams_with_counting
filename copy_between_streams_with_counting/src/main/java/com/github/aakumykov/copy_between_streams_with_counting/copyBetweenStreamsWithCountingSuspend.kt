@@ -8,8 +8,12 @@ import java.io.OutputStream
 import kotlin.coroutines.resume
 
 /**
- * @return Pair<Long,Long>: число байт, прочитанных из входного потока,
- * записанных в выходной поток.
+ * @param inputStream
+ * @param outputStream
+ * @param bufferSize
+ * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
+ * @param writingCallback По завершении копирования возвращает количество записанных байт.
+ * @return Pair<Long,Long>: число прочитанных и записанных байт.
  */
 // TODO: (возможно) StreamCancellationException::class
 @Throws(IOException::class)
@@ -46,11 +50,11 @@ suspend fun copyBetweenStreamsWithCountingSuspend(
                 break
             }
             totalReadBytes += readPortionOfBytes
-            readingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
+            readingCallback?.invoke(totalReadBytes)
 
             outputStream.write(dataBuffer, 0, readPortionOfBytes)
             totalWriteBytes += readPortionOfBytes
-            writingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
+            writingCallback?.invoke(totalReadBytes)
         }
     }
 }

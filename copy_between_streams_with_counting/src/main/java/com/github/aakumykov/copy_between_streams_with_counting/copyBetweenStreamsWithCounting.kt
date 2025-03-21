@@ -5,8 +5,13 @@ import java.io.InputStream
 import java.io.OutputStream
 
 /**
+ * @param inputStream
+ * @param outputStream
+ * @param bufferSize
+ * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
+ * @param writingCallback По завершении копирования возвращает количество записанных байт.
  * @param finishCallback Вызывается по завершении копирования,
- * возвращает количество прочитанных/записанных байт.
+ * возвращает количество прочитанных и записанных байт.
  */
 @Throws(IOException::class)
 fun copyBetweenStreamsWithCounting(
@@ -32,12 +37,12 @@ fun copyBetweenStreamsWithCounting(
 
         totalReadBytes += bytesChunk
 
-        readingCallback?.invoke(totalReadBytes) // FIXME: Long -> Int
+        readingCallback?.invoke(totalReadBytes)
 
         outputStream.write(dataBuffer, 0, bytesChunk)
 
         totalWrittenBytes += bytesChunk
 
-        writingCallback?.invoke(totalWrittenBytes) // FIXME: Long -> Int
+        writingCallback?.invoke(totalWrittenBytes)
     }
 }
