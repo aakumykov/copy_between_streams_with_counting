@@ -5,6 +5,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -102,31 +104,79 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     }
 
 
+    // Обычный вариант
     @Test
     fun target_file_exists_after_copying() {
         copyFromSourceToTarget()
         assertTrue(targetFile.exists())
     }
 
+    // suspend-вариант
+    @Test
+    fun target_file_exists_after_copying_suspend() {
+        runBlocking {
+            copyFromSourceToTargetSuspend()
+            assertTrue(targetFile.exists())
+        }
+    }
 
+
+    // Обычный вариант
     @Test
     fun target_file_size_equals_source_file_size_after_copying() {
         copyFromSourceToTarget()
         assertEquals(sourceFile.length(), targetFile.length())
     }
 
+    // suspend-вариант
+    @Test
+    fun target_file_size_equals_source_file_size_after_copying_suspend() {
+        runBlocking {
+            copyFromSourceToTargetSuspend()
+            assertEquals(sourceFile.length(), targetFile.length())
+        }
+    }
 
+
+    // Обычный вариант
     @Test
     fun size_of_source_and_target_files_are_the_same_after_copying() {
         copyFromSourceToTarget()
         assertEquals(sourceFileSize.toLong(), targetFile.length())
     }
 
+    // suspend-вариант
+    @Test
+    fun size_of_source_and_target_files_are_the_same_after_copying_suspend() {
+        runBlocking {
+            copyFromSourceToTargetSuspend()
+            assertEquals(sourceFileSize.toLong(), targetFile.length())
+        }
+    }
 
+
+    // Обычный вариант
     @Test
     fun contents_of_source_and_target_files_are_the_same_after_copying() {
+        copy_and_compare_byte_by_byte { copyFromSourceToTarget() }
+    }
 
-        copyFromSourceToTarget()
+    // suspend-вариант
+    @Test
+    fun contents_of_source_and_target_files_are_the_same_after_copying_suspend() {
+        runBlocking {
+            copy_and_compare_byte_by_byte {
+                runBlocking {
+                    copyFromSourceToTargetSuspend()
+                }
+            }
+        }
+    }
+
+
+    private fun copy_and_compare_byte_by_byte(copyCommand: Runnable) {
+
+        copyCommand.run()
 
         val sourceStream = sourceFile.inputStream()
         val targetStream = targetFile.inputStream()
@@ -167,6 +217,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     }
 
 
+    // Обычный вариант
     @Test
     fun when_copyBetweenStreamsWithCounting_when_callback_methods_are_invoked_right_times() {
 
@@ -181,6 +232,29 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
             readingCallback = { readingCallbackInvokesCount++ },
             writingCallback = { writingCallbackInvokesCount++ }
         )
+
+        // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.
+        assertEquals(readingCallbackInvokesCount, sourceFileSize)
+        assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
+    }
+
+    // suspend-вариант
+    @Test
+    fun when_copyBetweenStreamsWithCounting_when_callback_methods_are_invoked_right_times_suspend() {
+
+        val bufferSize = 1
+        var readingCallbackInvokesCount = 0
+        var writingCallbackInvokesCount = 0
+
+        runBlocking {
+            copyBetweenStreamsWithCountingSuspend(
+                inputStream = sourceStream,
+                outputStream = targetFileStream,
+                bufferSize = bufferSize,
+                readingCallback = { readingCallbackInvokesCount++ },
+                writingCallback = { writingCallbackInvokesCount++ }
+            )
+        }
 
         // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.
         assertEquals(readingCallbackInvokesCount, sourceFileSize)
@@ -205,8 +279,30 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     }
 
 
+    @Test
+    fun when_copyBetweenStreamsWithCountingSuspend_when_read_bytes_count_equals_write_count() {
+        runBlocking {
+            copyBetweenStreamsWithCountingSuspend(
+                inputStream = sourceStream,
+                outputStream = targetFileStream,
+            ).also { result: Pair<Long,Long> ->
+                assertTrue(result.first > 0)
+                assertTrue(result.second > 0)
+                assertEquals(result.first, result.second)
+            }
+        }
+    }
+
+
     private fun copyFromSourceToTarget() {
         copyBetweenStreamsWithCounting(
+            inputStream = sourceStream,
+            outputStream = targetFileStream,
+        )
+    }
+
+    private suspend fun copyFromSourceToTargetSuspend(): Pair<Long,Long> {
+        return copyBetweenStreamsWithCountingSuspend(
             inputStream = sourceStream,
             outputStream = targetFileStream,
         )
