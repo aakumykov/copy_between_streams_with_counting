@@ -1,10 +1,10 @@
-package com.github.aakumykov.copy_between_streams_with_counting
+package com.github.aakumykov.copy_between_streams_with_counting.cache_dir
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertTrue
+import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCounting
+import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCountingSuspend
+import junit.framework.TestCase
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -23,7 +23,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     private val appContext = InstrumentationRegistry.getInstrumentation().targetContext
     private val cacheDir: File get() = appContext.cacheDir
 
-    private val random: Random get() = Random
+    private val random: Random get() = Random.Default
 
     private var fileNumber: Int = 0
 
@@ -94,13 +94,13 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
 
     @Test
     fun source_file_exists() {
-        assertTrue(sourceFile.exists())
+        TestCase.assertTrue(sourceFile.exists())
     }
 
 
     @Test
     fun source_file_size_equals_declared_size() {
-        assertEquals(sourceFile.length(), sourceFileSize.toLong())
+        TestCase.assertEquals(sourceFile.length(), sourceFileSize.toLong())
     }
 
 
@@ -108,7 +108,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     @Test
     fun target_file_exists_after_copying() {
         copyFromSourceToTarget()
-        assertTrue(targetFile.exists())
+        TestCase.assertTrue(targetFile.exists())
     }
 
     // suspend-вариант
@@ -116,7 +116,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     fun target_file_exists_after_copying_suspend() {
         runBlocking {
             copyFromSourceToTargetSuspend()
-            assertTrue(targetFile.exists())
+            TestCase.assertTrue(targetFile.exists())
         }
     }
 
@@ -125,7 +125,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     @Test
     fun target_file_size_equals_source_file_size_after_copying() {
         copyFromSourceToTarget()
-        assertEquals(sourceFile.length(), targetFile.length())
+        TestCase.assertEquals(sourceFile.length(), targetFile.length())
     }
 
     // suspend-вариант
@@ -133,7 +133,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     fun target_file_size_equals_source_file_size_after_copying_suspend() {
         runBlocking {
             copyFromSourceToTargetSuspend()
-            assertEquals(sourceFile.length(), targetFile.length())
+            TestCase.assertEquals(sourceFile.length(), targetFile.length())
         }
     }
 
@@ -142,7 +142,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     @Test
     fun size_of_source_and_target_files_are_the_same_after_copying() {
         copyFromSourceToTarget()
-        assertEquals(sourceFileSize.toLong(), targetFile.length())
+        TestCase.assertEquals(sourceFileSize.toLong(), targetFile.length())
     }
 
     // suspend-вариант
@@ -150,7 +150,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     fun size_of_source_and_target_files_are_the_same_after_copying_suspend() {
         runBlocking {
             copyFromSourceToTargetSuspend()
-            assertEquals(sourceFileSize.toLong(), targetFile.length())
+            TestCase.assertEquals(sourceFileSize.toLong(), targetFile.length())
         }
     }
 
@@ -234,8 +234,8 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
         )
 
         // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.
-        assertEquals(readingCallbackInvokesCount, sourceFileSize)
-        assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
+        TestCase.assertEquals(readingCallbackInvokesCount, sourceFileSize)
+        TestCase.assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
     }
 
     // suspend-вариант
@@ -257,8 +257,8 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
         }
 
         // Размер буфера 1, поэтому число вызова коллбеков должно равняться размеру файла.
-        assertEquals(readingCallbackInvokesCount, sourceFileSize)
-        assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
+        TestCase.assertEquals(readingCallbackInvokesCount, sourceFileSize)
+        TestCase.assertEquals(writingCallbackInvokesCount.toLong(), targetFile.length())
     }
 
 
@@ -275,7 +275,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
             }
         )
 
-        assertTrue(finishIsInvoked.get())
+        TestCase.assertTrue(finishIsInvoked.get())
     }
 
 
@@ -285,10 +285,10 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
             copyBetweenStreamsWithCountingSuspend(
                 inputStream = sourceStream,
                 outputStream = targetFileStream,
-            ).also { result: Pair<Long,Long> ->
-                assertTrue(result.first > 0)
-                assertTrue(result.second > 0)
-                assertEquals(result.first, result.second)
+            ).also { result: Pair<Long, Long> ->
+                TestCase.assertTrue(result.first > 0)
+                TestCase.assertTrue(result.second > 0)
+                TestCase.assertEquals(result.first, result.second)
             }
         }
     }
@@ -313,7 +313,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     @Test
     fun files_does_not_exists_alter_deleting_them() {
         deleteTestFiles()
-        assertFalse(sourceFile.exists())
-        assertFalse(targetFile.exists())
+        TestCase.assertFalse(sourceFile.exists())
+        TestCase.assertFalse(targetFile.exists())
     }
 }
