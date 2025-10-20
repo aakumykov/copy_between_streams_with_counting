@@ -14,7 +14,7 @@ class CopyFromStorageToStorage : TestBase() {
 
             val sFileName = randomName
             val tFileName = randomName
-            val data = randomBytes(1024*1024)
+            val data = randomBytes//(1024*1024)
 
             val sFile = createFileIn(downloadsDir, sFileName, data)
             val tFile = createFileIn(photosDir, tFileName)
