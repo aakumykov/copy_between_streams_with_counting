@@ -8,3 +8,6 @@ val randomName: String
 
 val randomBytes: ByteArray
     get() = Random.nextBytes(10)
+
+fun randomBytes(amount: Int): ByteArray = Random.nextBytes(amount)
+
