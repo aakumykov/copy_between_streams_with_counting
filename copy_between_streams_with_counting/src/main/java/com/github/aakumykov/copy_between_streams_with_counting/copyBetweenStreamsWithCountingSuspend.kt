@@ -1,11 +1,11 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * @param inputStream
@@ -13,48 +13,46 @@ import kotlin.coroutines.resume
  * @param bufferSize
  * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
  * @param writingCallback По завершении копирования возвращает количество записанных байт.
- * @return Pair<Long,Long>: число прочитанных и записанных байт.
+ * @return Pair<totalReadBytes:Long,totalWriteBytes:Long>: число прочитанных и записанных байт.
+ * В случае, если корутина уже была завершена (cancellableContinuation.isActive == false),
+ * в Pair возвращаются значения <-1,-1>
  */
-// TODO: (возможно) StreamCancellationException::class
 @Throws(IOException::class)
 suspend fun copyBetweenStreamsWithCountingSuspend(
     inputStream: InputStream,
     outputStream: OutputStream,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    readingCallback: ((Long) -> Unit)? = null,
-    writingCallback: ((Long) -> Unit)? = null,
-): Pair<Long,Long> {
-    return suspendCancellableCoroutine<Pair<Long,Long>> { cancelableContinuation: CancellableContinuation<Pair<Long,Long>> ->
+    readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
+    writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
+)
+    : Pair<Long,Long>
+{
+    return suspendCancellableCoroutine { cancellableContinuation ->
 
-        var isActive = cancelableContinuation.isActive
-
-        cancelableContinuation.invokeOnCancellation {  cause: Throwable? ->
-            isActive = false
+        cancellableContinuation.invokeOnCancellation {
             inputStream.close()
             outputStream.close()
         }
 
-        val dataBuffer = ByteArray(bufferSize)
-        var readPortionOfBytes: Int
-        var totalReadBytes: Long = 0
-        var totalWriteBytes: Long = 0
-
-        while (true) {
-
-            if (!isActive)
-                break
-
-            readPortionOfBytes = inputStream.read(dataBuffer)
-            if (-1 == readPortionOfBytes) {
-                cancelableContinuation.resume(Pair(totalReadBytes, totalWriteBytes))
-                break
+        try {
+            // TODO: разобраться с ситуацией, когда isActive == false: что тогда возвращать?
+            if (cancellableContinuation.isActive) {
+                copyBetweenStreamsWithCounting(
+                    inputStream,
+                    outputStream,
+                    bufferSize,
+                    readingCallback,
+                    writingCallback
+                ).let {
+                    cancellableContinuation.resume(it)
+                }
             }
-            totalReadBytes += readPortionOfBytes
-            readingCallback?.invoke(totalReadBytes)
+            else {
+                cancellableContinuation.resume(Pair(-1,-1))
+            }
 
-            outputStream.write(dataBuffer, 0, readPortionOfBytes)
-            totalWriteBytes += readPortionOfBytes
-            writingCallback?.invoke(totalReadBytes)
+        } catch (t: Throwable) {
+            cancellableContinuation.resumeWithException(t)
         }
     }
 }

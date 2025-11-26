@@ -10,39 +10,48 @@ import java.io.OutputStream
  * @param bufferSize
  * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
  * @param writingCallback По завершении копирования возвращает количество записанных байт.
- * @param finishCallback Вызывается по завершении копирования,
- * возвращает количество прочитанных и записанных байт.
+ * @param finishCallback Вызывается по завершении копирования, возвращает количество прочитанных и записанных байт.
  */
 @Throws(IOException::class)
 fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    readingCallback: ((Long) -> Unit)? = null,
-    writingCallback: ((Long) -> Unit)? = null,
-    finishCallback: ((Long,Long) -> Unit)? = null,
-) {
-    val dataBuffer = ByteArray(bufferSize)
-    var bytesChunk: Int
+    readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
+    writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
+    finishCallback: ((totalReadBytes:Long, totalWriteBytes:Long) -> Unit)? = null,
+)
+    : Pair<Long,Long>
+{
+    fun closeStreams() {
+        inputStream.close()
+        outputStream.close()
+    }
+
+    var readBytes: Int
+    val buffer = ByteArray(bufferSize)
+
     var totalReadBytes: Long = 0
-    var totalWrittenBytes: Long = 0
+    var totalWriteBytes: Long = 0
 
-    while (true) {
-        bytesChunk = inputStream.read(dataBuffer)
+    try {
+        while (true) {
+            readBytes = inputStream.read(buffer)
 
-        if (-1 == bytesChunk) {
-            finishCallback?.invoke(totalReadBytes, totalWrittenBytes)
-            return
+            if (-1 == readBytes) {
+                return Pair(totalReadBytes,totalWriteBytes)
+            }
+
+            totalReadBytes += readBytes
+            readingCallback?.invoke(totalReadBytes)
+
+            outputStream.write(buffer, 0, readBytes)
+
+            totalWriteBytes += readBytes
+            writingCallback?.invoke(totalWriteBytes)
         }
-
-        totalReadBytes += bytesChunk
-
-        readingCallback?.invoke(totalReadBytes)
-
-        outputStream.write(dataBuffer, 0, bytesChunk)
-
-        totalWrittenBytes += bytesChunk
-
-        writingCallback?.invoke(totalWrittenBytes)
+    } finally {
+        closeStreams()
+        finishCallback?.invoke(totalReadBytes, totalWriteBytes)
     }
 }
