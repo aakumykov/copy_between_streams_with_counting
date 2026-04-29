@@ -61,7 +61,9 @@ fun copyBetweenStreamsWithCounting(
 
             // Подсчёт текущей скорости.
             val elapsedMs = System.currentTimeMillis() - startTime
-            if (elapsedMs == 0L) continue
+            if (elapsedMs == 0L) {
+                continue
+            }
 
             val currentSpeed: Float = readBytes / (elapsedMs / 1024f)
             speedChangedCallback?.invoke(currentSpeed)
@@ -69,7 +71,9 @@ fun copyBetweenStreamsWithCounting(
             // Подстройка под заданную скорость.
             val targetSpeed = requiredSpeedBytesPerSecond.get()
 
-            if (-1L == targetSpeed) continue
+            if (-1L == targetSpeed) {
+                continue
+            }
 
             if (currentSpeed > targetSpeed) {
                 val sleepTime = (readBytes * 1024L / targetSpeed) - elapsedMs
