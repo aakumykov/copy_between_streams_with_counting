@@ -1,5 +1,6 @@
 package com.github.aakumykov.copy_between_streams_with_counting.cache_dir
 
+import android.icu.util.UniversalTimeScale.toLong
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCounting
@@ -8,6 +9,7 @@ import junit.framework.TestCase
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +17,7 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
@@ -77,10 +80,13 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     }
 
 
-    private fun prepareRandomSourceFileData() {
+    private fun prepareRandomSourceFileData(
+        dataChunkSize: Int = randomDataChinkSize,
+        chinksCount: Int = randomDataMultiplier,
+    ) {
         sourceFile.outputStream().use { outputStream ->
-            repeat(randomDataMultiplier) {
-                outputStream.write(random.nextBytes(randomDataChinkSize))
+            repeat(chinksCount) {
+                outputStream.write(random.nextBytes(dataChunkSize))
             }
         }
     }
@@ -293,6 +299,49 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
         }
     }
 
+
+    @Test
+    fun when_copy_from_file_to_file_then_speed_change_callback_invokes() {
+
+        val isSpeedCallbackInvoked = AtomicBoolean(false)
+
+        copyBetweenStreamsWithCounting(
+            inputStream = sourceStream,
+            outputStream = targetFileStream,
+            speedChangedCallback = {
+                isSpeedCallbackInvoked.set(true)
+            }
+        )
+
+        TestCase.assertTrue(isSpeedCallbackInvoked.get())
+    }
+
+    // TODO: suspend-вариант
+
+
+    /*@Test
+    fun when_copy_from_big_file_to_file_then_speed_callback_invokes_many_times() {
+
+        val copyingBufferSize = DEFAULT_BUFFER_SIZE
+        val dataChunkSize = DEFAULT_BUFFER_SIZE
+        val dataChunkCount = 1000//random.nextInt(2,11)
+
+        prepareRandomSourceFileData(dataChunkSize, dataChunkCount)
+
+        val speedCallbackInvokeCount = AtomicInteger(0)
+
+        copyBetweenStreamsWithCounting(
+            inputStream = sourceStream,
+            outputStream = targetFileStream,
+            bufferSize = copyingBufferSize,
+            requiredSpeedBytesPerSecond = { 10 },
+            speedChangedCallback = {
+                speedCallbackInvokeCount.addAndGet(1)
+            }
+        )
+
+        Assert.assertEquals(dataChunkCount, speedCallbackInvokeCount.get())
+    }*/
 
     private fun copyFromSourceToTarget() {
         copyBetweenStreamsWithCounting(
