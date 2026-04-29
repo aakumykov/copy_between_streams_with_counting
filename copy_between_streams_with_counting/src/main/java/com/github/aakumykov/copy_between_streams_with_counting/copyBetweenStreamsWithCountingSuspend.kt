@@ -38,11 +38,11 @@ suspend fun copyBetweenStreamsWithCountingSuspend(
             // TODO: разобраться с ситуацией, когда isActive == false: что тогда возвращать?
             if (cancellableContinuation.isActive) {
                 copyBetweenStreamsWithCounting(
-                    inputStream,
-                    outputStream,
-                    bufferSize,
-                    readingCallback,
-                    writingCallback
+                    inputStream = inputStream,
+                    outputStream = outputStream,
+                    bufferSize = bufferSize,
+                    readingCallback = readingCallback,
+                    writingCallback = writingCallback
                 ).let {
                     cancellableContinuation.resume(it)
                 }

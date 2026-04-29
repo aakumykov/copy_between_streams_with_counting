@@ -1,5 +1,6 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
+import android.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -16,10 +17,13 @@ import java.io.OutputStream
 fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
+    defaultSpeedBytesPerSecond: Long = -1L,
+    targetUploadingSpeed: java.util.function.Supplier<Long> = java.util.function.Supplier { defaultSpeedBytesPerSecond },
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
     writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
     finishCallback: ((totalReadBytes:Long, totalWriteBytes:Long) -> Unit)? = null,
+    speedChangedCallback: ((speedBytesPerSecond: Long) -> Unit)? = null,
 )
     : Pair<Long,Long>
 {
@@ -34,8 +38,11 @@ fun copyBetweenStreamsWithCounting(
     var totalReadBytes: Long = 0
     var totalWriteBytes: Long = 0
 
+    val startTime = System.currentTimeMillis()
+
     try {
         while (true) {
+            // Чтение из входного потока.
             readBytes = inputStream.read(buffer)
 
             if (-1 == readBytes) {
@@ -45,10 +52,30 @@ fun copyBetweenStreamsWithCounting(
             totalReadBytes += readBytes
             readingCallback?.invoke(totalReadBytes)
 
+            // Запись в выходной поток.
             outputStream.write(buffer, 0, readBytes)
 
             totalWriteBytes += readBytes
             writingCallback?.invoke(totalWriteBytes)
+
+            // Подсчёт текущей скорости.
+            val elapsedMs = System.currentTimeMillis() - startTime
+            if (elapsedMs == 0L) continue
+
+            val currentSpeed: Long = readBytes / (elapsedMs / 1024L)
+            speedChangedCallback?.invoke(currentSpeed)
+
+            // Подстройка под заданную скорость.
+            val targetSpeed = targetUploadingSpeed.get()
+
+            if (-1L == targetSpeed) continue
+
+            if (currentSpeed > targetSpeed) {
+                val sleepTime = (readBytes * 1024L / targetSpeed) - elapsedMs
+                if (sleepTime > 0) {
+                    Thread.sleep(sleepTime)
+                }
+            }
         }
     } finally {
         closeStreams()
