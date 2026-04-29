@@ -1,6 +1,5 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
-import android.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -8,7 +7,10 @@ import java.io.OutputStream
 /**
  * @param inputStream
  * @param outputStream
- * @param bufferSize
+ * @param requiredSpeedBytesPerSecond Целевая скорость копирования, байт/с. В начале
+ * оказывается значительно большей, с копированием каждой порции данных (равной по размеру
+ * [bufferSize]) скорость стремится всё ближе к целевой.
+ * @param bufferSize По умолчанию [DEFAULT_BUFFER_SIZE].
  * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
  * @param writingCallback По завершении копирования возвращает количество записанных байт.
  * @param finishCallback Вызывается по завершении копирования, возвращает количество прочитанных и записанных байт.
@@ -17,13 +19,12 @@ import java.io.OutputStream
 fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
-    defaultSpeedBytesPerSecond: Long = -1L,
-    targetUploadingSpeed: java.util.function.Supplier<Long> = java.util.function.Supplier { defaultSpeedBytesPerSecond },
+    requiredSpeedBytesPerSecond: androidx.core.util.Supplier<Long> = androidx.core.util.Supplier { -1 },
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
     writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
     finishCallback: ((totalReadBytes:Long, totalWriteBytes:Long) -> Unit)? = null,
-    speedChangedCallback: ((speedBytesPerSecond: Long) -> Unit)? = null,
+    speedChangedCallback: ((speedBytesPerSecond: Float) -> Unit)? = null,
 )
     : Pair<Long,Long>
 {
@@ -62,11 +63,11 @@ fun copyBetweenStreamsWithCounting(
             val elapsedMs = System.currentTimeMillis() - startTime
             if (elapsedMs == 0L) continue
 
-            val currentSpeed: Long = readBytes / (elapsedMs / 1024L)
+            val currentSpeed: Float = readBytes / (elapsedMs / 1024f)
             speedChangedCallback?.invoke(currentSpeed)
 
             // Подстройка под заданную скорость.
-            val targetSpeed = targetUploadingSpeed.get()
+            val targetSpeed = requiredSpeedBytesPerSecond.get()
 
             if (-1L == targetSpeed) continue
 
