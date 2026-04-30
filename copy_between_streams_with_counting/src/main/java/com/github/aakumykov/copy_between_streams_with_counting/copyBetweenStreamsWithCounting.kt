@@ -10,6 +10,7 @@ import java.io.OutputStream
  * @param requiredSpeedBytesPerSecond Целевая скорость копирования, байт/с. В начале
  * оказывается значительно большей, с копированием каждой порции данных (равной по размеру
  * [bufferSize]) скорость стремится всё ближе к целевой.
+ * Будучи Supplier-ом, может быть изменена во время выполнения.
  * @param bufferSize По умолчанию [DEFAULT_BUFFER_SIZE].
  * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
  * @param writingCallback По завершении копирования возвращает количество записанных байт.
@@ -25,6 +26,7 @@ fun copyBetweenStreamsWithCounting(
     writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
     finishCallback: ((totalReadBytes:Long, totalWriteBytes:Long) -> Unit)? = null,
     speedChangedCallback: ((speedBytesPerSecond: Float) -> Unit)? = null,
+    testBytesPortionTimeoutMs: Long? = null
 )
     : Pair<Long,Long>
 {
@@ -58,6 +60,8 @@ fun copyBetweenStreamsWithCounting(
 
             totalWriteBytes += readBytes
             writingCallback?.invoke(totalWriteBytes)
+
+            testBytesPortionTimeoutMs?.let { Thread.sleep(it) }
 
             // Подсчёт текущей скорости.
             val elapsedMs = System.currentTimeMillis() - startTime
