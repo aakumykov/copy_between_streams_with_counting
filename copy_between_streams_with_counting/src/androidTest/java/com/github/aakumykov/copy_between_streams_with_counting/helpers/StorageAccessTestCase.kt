@@ -1,4 +1,4 @@
-package com.github.aakumykov.copy_between_streams_with_counting
+package com.github.aakumykov.copy_between_streams_with_counting.helpers
 
 import android.Manifest
 import androidx.test.platform.app.InstrumentationRegistry

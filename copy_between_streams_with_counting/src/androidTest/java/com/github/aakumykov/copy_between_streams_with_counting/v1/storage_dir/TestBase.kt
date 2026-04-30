@@ -1,9 +1,7 @@
-package com.github.aakumykov.copy_between_streams_with_counting.storage_dir
+package com.github.aakumykov.copy_between_streams_with_counting.v1.storage_dir
 
 import android.os.Environment
-import com.github.aakumykov.copy_between_streams_with_counting.StorageAccessTestCase
-import com.github.aakumykov.copy_between_streams_with_counting.randomBytes
-import com.github.aakumykov.copy_between_streams_with_counting.randomName
+import com.github.aakumykov.copy_between_streams_with_counting.helpers.StorageAccessTestCase
 import java.io.File
 
 abstract class TestBase : StorageAccessTestCase() {

@@ -1,4 +1,4 @@
-package com.github.aakumykov.copy_between_streams_with_counting
+package com.github.aakumykov.copy_between_streams_with_counting.utils
 
 import java.util.UUID
 import kotlin.random.Random

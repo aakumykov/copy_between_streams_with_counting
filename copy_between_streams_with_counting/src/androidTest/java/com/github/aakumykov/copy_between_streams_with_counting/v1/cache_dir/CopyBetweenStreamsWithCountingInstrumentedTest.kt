@@ -1,4 +1,4 @@
-package com.github.aakumykov.copy_between_streams_with_counting.cache_dir
+package com.github.aakumykov.copy_between_streams_with_counting.v1.cache_dir
 
 import android.icu.util.UniversalTimeScale.toLong
 import androidx.test.ext.junit.runners.AndroidJUnit4
