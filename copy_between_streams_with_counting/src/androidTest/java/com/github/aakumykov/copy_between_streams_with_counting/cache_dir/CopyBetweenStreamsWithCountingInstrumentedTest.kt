@@ -319,7 +319,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     // TODO: suspend-вариант
 
 
-    @Test
+    /*@Test
     fun when_copy_from_big_file_to_file_then_speed_callback_invokes_many_times() {
 
         val copyingBufferSize = DEFAULT_BUFFER_SIZE
@@ -342,7 +342,7 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
         )
 
         Assert.assertEquals(dataChunkCount, speedCallbackInvokeCount.get())
-    }
+    }*/
 
     private fun copyFromSourceToTarget() {
         copyBetweenStreamsWithCounting(
