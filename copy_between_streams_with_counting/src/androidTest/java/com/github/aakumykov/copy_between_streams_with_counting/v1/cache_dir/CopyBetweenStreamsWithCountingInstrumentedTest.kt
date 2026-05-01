@@ -1,6 +1,7 @@
 package com.github.aakumykov.copy_between_streams_with_counting.v1.cache_dir
 
 import android.icu.util.UniversalTimeScale.toLong
+import android.util.Log.i
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCounting
@@ -18,6 +19,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
@@ -300,24 +302,63 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
     }
 
 
+    // Логика этого теста нестабильна и зависит от
+    // размера входных данных. Если размер файла-источника
+    // будет равен единице, размер буфера копирования
+    // также будет равен единице; данные скопируются
+    // за одно действие, временная задержка не будет применена,
+    // подсчёт скорости не будет осуществлён, коллбек
+    // скорости не сработает.
+    //
+    // p.s. Тест валится при размере входных данных 10240, размере буфера 5120,
+    // на втором прогоне. Функция [copyBetweenStreamsWithCounting] вообще
+    // не отрабатывает, сразу идёт переход к Assert.
     @Test
     fun when_copy_from_file_to_file_then_speed_change_callback_invokes() {
 
-        val isSpeedCallbackInvoked = AtomicBoolean(false)
+//        repeat(10) { i ->
+//            println("Прогон-$i) file size: ${sourceFile.length()}, buffer size: $bufferSize")
 
-        copyBetweenStreamsWithCounting(
-            inputStream = sourceStream,
-            outputStream = targetFileStream,
-            speedChangedCallback = {
-                isSpeedCallbackInvoked.set(true)
-            }
-        )
+            Assert.assertTrue(randomDataChinkSize > 1)
 
-        TestCase.assertTrue(isSpeedCallbackInvoked.get())
+            val isSpeedCallbackInvoked = AtomicBoolean(false)
+
+            // В этом тесте размер буфера берётся меньше размера файла,
+            // чтобы тот был скопирован не в один приём.
+            val bufferSize = (sourceFile.length() / 2f).roundToInt()
+
+            // Искусственная задержка, чтобы растянуть время копирования
+            // для возможности подсчёта скорости.
+            val portionCopySleepTimeoutMs: Long = 100
+
+            copyBetweenStreamsWithCounting(
+                inputStream = sourceStream,
+                outputStream = targetFileStream,
+                testBytesPortionTimeoutMs = portionCopySleepTimeoutMs,
+                speedChangedCallback = {
+                    isSpeedCallbackInvoked.set(true)
+                },
+                bufferSize = bufferSize
+            )
+
+            TestCase.assertTrue(isSpeedCallbackInvoked.get())
+//        }
     }
 
     // TODO: suspend-вариант
 
+    @Test
+    fun when_incorrect_buffer_size_then_exception_thrown() {
+        listOf(-1,0).forEach { bufferSize ->
+            Assert.assertThrows(IllegalArgumentException::class.java) {
+                copyBetweenStreamsWithCounting(
+                    inputStream = sourceStream,
+                    outputStream = targetFileStream,
+                    bufferSize = bufferSize
+                )
+            }
+        }
+    }
 
     /*@Test
     fun when_copy_from_big_file_to_file_then_speed_callback_invokes_many_times() {
