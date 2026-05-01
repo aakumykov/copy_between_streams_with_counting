@@ -30,9 +30,8 @@ fun copyBetweenStreamsWithCounting(
 )
     : Pair<Long,Long>
 {
-    fun closeStreams() {
-        inputStream.close()
-        outputStream.close()
+    if (bufferSize < 1) {
+        throw IllegalArgumentException("Buffer size cannot be smaller then 1")
     }
 
     var readBytes: Int
@@ -61,7 +60,9 @@ fun copyBetweenStreamsWithCounting(
             totalWriteBytes += readBytes
             writingCallback?.invoke(totalWriteBytes)
 
-            testBytesPortionTimeoutMs?.let { Thread.sleep(it) }
+            testBytesPortionTimeoutMs?.let {
+                Thread.sleep(it)
+            }
 
             // Подсчёт текущей скорости.
             val elapsedMs = System.currentTimeMillis() - startTime
@@ -87,7 +88,6 @@ fun copyBetweenStreamsWithCounting(
             }
         }
     } finally {
-        closeStreams()
         finishCallback?.invoke(totalReadBytes, totalWriteBytes)
     }
 }
