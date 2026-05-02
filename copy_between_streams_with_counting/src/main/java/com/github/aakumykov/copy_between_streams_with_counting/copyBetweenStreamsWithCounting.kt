@@ -1,5 +1,6 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
+import androidx.core.util.Supplier
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -20,13 +21,13 @@ import java.io.OutputStream
  * определяемой параметром [bufferSize].
  * @param afterWriteCallback Коллбек, запускаемый после записи каждой порции данных.
 
- v0.0.10-alpha
+v0.0.11-alpha
  */
 @Throws(IOException::class)
-fun copyBetweenStreamsWithCounting(
+fun copyBetweenStreamsWithCounting2(
     inputStream: InputStream,
     outputStream: OutputStream,
-    requiredSpeedBytesPerSecond: androidx.core.util.Supplier<Long> = androidx.core.util.Supplier { -1 },
+    requiredSpeedBytesPerSecond: Supplier<Long> = Supplier { -1 },
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
     writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
@@ -34,7 +35,7 @@ fun copyBetweenStreamsWithCounting(
     speedCallback: ((speedBytesPerSecond: Float) -> Unit)? = null,
     afterWriteCallback: (() -> Unit)? = null
 )
-    : Pair<Long,Long>
+        : Pair<Long,Long>
 {
     if (bufferSize < 1) {
         throw IllegalArgumentException("Buffer size cannot be smaller then 1")
@@ -48,10 +49,27 @@ fun copyBetweenStreamsWithCounting(
 
     val startTime = System.currentTimeMillis()
 
+    val incrementalBufferSizes: MutableSet<Int> = buildList<Int> {
+        var size: Int = bufferSize
+        while (size >= 1) {
+            add(size)
+            size /= 2
+        }
+    }.toMutableSet()
+
+    fun currentBufferSize(): Int {
+        return if(incrementalBufferSizes.isEmpty()) bufferSize
+        else incrementalBufferSizes.let {
+            val b = it.last()
+            it.remove(b)
+            b
+        }
+    }
+
     try {
         while (true) {
             // Чтение из входного потока.
-            readBytes = inputStream.read(buffer)
+            readBytes = inputStream.read(buffer, 0, currentBufferSize())
 
             if (-1 == readBytes) {
                 return Pair(totalReadBytes,totalWriteBytes)
