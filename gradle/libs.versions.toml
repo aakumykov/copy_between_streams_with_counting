@@ -1,7 +1,7 @@
 [versions]
 agp = "8.13.0"
 cloud_authenticator = "0.0.11-alpha"
-copy_between_streams_with_counting = "0.0.10-alpha"
+copy_between_streams_with_counting = "0.0.11-alpha"
 gson = "2.14.0"
 kaspresso = "1.6.0"
 kotlin = "2.2.20"
