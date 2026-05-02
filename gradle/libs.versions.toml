@@ -1,6 +1,7 @@
 [versions]
 agp = "8.13.0"
 cloud_authenticator = "0.0.11-alpha"
+copy_between_streams_with_counting = "0.0.10-alpha"
 gson = "2.14.0"
 kaspresso = "1.6.0"
 kotlin = "2.2.20"
@@ -26,6 +27,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-orchestrator = { module = "androidx.test:orchestrator", version.ref = "orchestrator" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
 cloud_authenticator = { module = "com.github.aakumykov.cloud_authenticator:cloud_authenticator", version.ref = "cloud_authenticator" }
+copy_between_streams_with_counting = { module = "com.github.aakumykov:copy_between_streams_with_counting", version.ref = "copy_between_streams_with_counting" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
