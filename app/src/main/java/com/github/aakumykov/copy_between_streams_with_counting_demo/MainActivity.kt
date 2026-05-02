@@ -23,6 +23,7 @@ import com.github.aakumykov.storage_access_helper.StorageAccessHelper
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.roundToInt
@@ -35,6 +36,10 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
     private val fileSelector: FileSelector<SimpleSortingMode> get() = LocalFileSelector().prepare()
 
     private var selectedFSItem: FSItem? = null
+    private var currentJob: Job? = null
+
+    private val requiredSpeedBytePerSecond: Long get() = 1000
+    private val stringBuilder: StringBuilder by lazy { StringBuilder() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,11 +73,12 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
     }
 
     private fun onSelectFileButtonClicked() {
-        hideError()
-        hideInfo()
-
-        if (storageAccessHelper.hasReadAccess()) selectAFile()
-        else storageAccessHelper.requestReadAccess { selectAFile() }
+        storageAccessHelper.requestReadAccess {
+            hideError()
+            hideInfo()
+            if (storageAccessHelper.hasReadAccess()) selectAFile()
+            else storageAccessHelper.requestReadAccess { selectAFile() }
+        }
     }
 
     private fun onCopyFileLocallyButtonClicked() {
@@ -83,24 +89,43 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
         val ceh = CoroutineExceptionHandler { _, throwable ->
             showError(throwable)
             hideProgressBar()
+            currentJob = null
         }
 
-        lifecycleScope.launch {
+        currentJob = lifecycleScope.launch {
+
             showProgressBar(true)
+            stringBuilder.clear()
+
             launch (Dispatchers.IO + ceh) {
                 sourceFile.inputStream().use { inputStream ->
                     targetFile.outputStream().use { fileOutputStream ->
                         copyBetweenStreamsWithCounting(
                             inputStream = inputStream,
                             outputStream = fileOutputStream,
-                            speedChangedCallback = {
-                                Log.d(TAG, "скорость: ${humanReadableByteCount(it.roundToLong())}")
+                            requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
+                            speedCallback = {
+                                val humanSpeed = humanReadableByteCount(it.roundToLong())
+                                stringBuilder.append(humanSpeed)
+                                stringBuilder.append("\n")
+
+                                launch (Dispatchers.Main) {
+                                    binding.infoView.text = stringBuilder
+                                    binding.infoScrollView.fullScroll(View.FOCUS_DOWN)
+                                }
+
+                                Log.d(TAG, "скорость: $humanSpeed")
+                            },
+                            afterWriteCallback = {
+                                Thread.sleep(500L)
                             }
                         )
                     }
                 }
-            }
+            }.join()
+
             hideProgressBar()
+            currentJob = null
         }
     }
 
