@@ -58,6 +58,13 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
                         copyBetweenStreamsWithCounting(
                             inputStream = inputStream,
                             outputStream = fileOutputStream,
+                            requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
+                            speedCallback = {
+                                Log.d(TAG, "скорость: ${humanReadableByteCount(it.roundToLong())}")
+                            },
+                            afterWriteCallback = {
+                                Thread.sleep(500L)
+                            }
                         )
                     }
                 }
