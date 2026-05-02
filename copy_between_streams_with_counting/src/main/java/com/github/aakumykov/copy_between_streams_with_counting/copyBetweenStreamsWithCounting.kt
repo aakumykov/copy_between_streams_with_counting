@@ -14,7 +14,13 @@ import java.io.OutputStream
  * @param bufferSize По умолчанию [DEFAULT_BUFFER_SIZE].
  * @param readingCallback По завершении копирования возвращает количество прочитанных байт.
  * @param writingCallback По завершении копирования возвращает количество записанных байт.
- * @param finishCallback Вызывается по завершении копирования, возвращает количество прочитанных и записанных байт.
+ * @param finishCallback Вызывается по завершении копирования, возвращает количество прочитанных
+ * и записанных байт.
+ * @param speedCallback Вызывается при каждом подсчёте скорости после копирования порции данных,
+ * определяемой параметром [bufferSize].
+ * @param afterWriteCallback Коллбек, запускаемый после записи каждой порции данных.
+
+ v0.0.10-alpha
  */
 @Throws(IOException::class)
 fun copyBetweenStreamsWithCounting(
@@ -25,8 +31,8 @@ fun copyBetweenStreamsWithCounting(
     readingCallback: ((totalReadBytes:Long) -> Unit)? = null,
     writingCallback: ((totalWriteBytes:Long) -> Unit)? = null,
     finishCallback: ((totalReadBytes:Long, totalWriteBytes:Long) -> Unit)? = null,
-    speedChangedCallback: ((speedBytesPerSecond: Float) -> Unit)? = null,
-    testBytesPortionTimeoutMs: Long? = null
+    speedCallback: ((speedBytesPerSecond: Float) -> Unit)? = null,
+    afterWriteCallback: (() -> Unit)? = null
 )
     : Pair<Long,Long>
 {
@@ -60,9 +66,7 @@ fun copyBetweenStreamsWithCounting(
             totalWriteBytes += readBytes
             writingCallback?.invoke(totalWriteBytes)
 
-            testBytesPortionTimeoutMs?.let {
-                Thread.sleep(it)
-            }
+            afterWriteCallback?.invoke()
 
             // Подсчёт текущей скорости.
             val elapsedMs = System.currentTimeMillis() - startTime
@@ -71,7 +75,7 @@ fun copyBetweenStreamsWithCounting(
             }
 
             val currentSpeed: Float = readBytes / (elapsedMs / 1024f)
-            speedChangedCallback?.invoke(currentSpeed)
+            speedCallback?.invoke(currentSpeed)
 
             // Подстройка под заданную скорость.
             val targetSpeed = requiredSpeedBytesPerSecond.get()
