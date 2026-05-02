@@ -45,7 +45,7 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.androidx.activity
     implementation libs.androidx.preference.ktx
-    implementation libs.copy.between.streams.with.counting
+    implementation project(":copy_between_streams_with_counting")
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
