@@ -1,7 +1,5 @@
 package com.github.aakumykov.copy_between_streams_with_counting.v1.cache_dir
 
-import android.icu.util.UniversalTimeScale.toLong
-import android.util.Log.i
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCounting
@@ -18,7 +16,6 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -334,8 +331,8 @@ class CopyBetweenStreamsWithCountingInstrumentedTest {
             copyBetweenStreamsWithCounting(
                 inputStream = sourceStream,
                 outputStream = targetFileStream,
-                testBytesPortionTimeoutMs = portionCopySleepTimeoutMs,
-                speedChangedCallback = {
+                afterWriteCallback = { Thread.sleep(portionCopySleepTimeoutMs) },
+                speedCallback = {
                     isSpeedCallbackInvoked.set(true)
                 },
                 bufferSize = bufferSize
