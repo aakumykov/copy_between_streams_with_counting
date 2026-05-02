@@ -1,9 +1,14 @@
 package com.github.aakumykov.copy_between_streams_with_counting
 
+import android.util.Log
 import androidx.core.util.Supplier
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Date
+import java.util.Timer
+import kotlin.concurrent.timer
+import kotlin.concurrent.timerTask
 
 /**
  * @param inputStream
@@ -20,11 +25,9 @@ import java.io.OutputStream
  * @param speedCallback Вызывается при каждом подсчёте скорости после копирования порции данных,
  * определяемой параметром [bufferSize].
  * @param afterWriteCallback Коллбек, запускаемый после записи каждой порции данных.
-
-v0.0.11-alpha
  */
 @Throws(IOException::class)
-fun copyBetweenStreamsWithCounting2(
+fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
     requiredSpeedBytesPerSecond: Supplier<Long> = Supplier { -1 },
@@ -66,6 +69,15 @@ fun copyBetweenStreamsWithCounting2(
         }
     }
 
+    var currentSpeed = 0f
+
+    val speedPublishingTimer: Timer? = if (null != speedCallback) {
+        timer(initialDelay = 0L, period = 1000L) {
+            Log.d("TIMER", "действие, ${Date().time}")
+            speedCallback.invoke(currentSpeed)
+        }
+    } else null
+
     try {
         while (true) {
             // Чтение из входного потока.
@@ -92,8 +104,7 @@ fun copyBetweenStreamsWithCounting2(
                 continue
             }
 
-            val currentSpeed: Float = readBytes / (elapsedMs / 1024f)
-            speedCallback?.invoke(currentSpeed)
+            currentSpeed = readBytes / (elapsedMs / 1024f)
 
             // Подстройка под заданную скорость.
             val targetSpeed = requiredSpeedBytesPerSecond.get()
@@ -105,11 +116,13 @@ fun copyBetweenStreamsWithCounting2(
             if (currentSpeed > targetSpeed) {
                 val sleepTime = (readBytes * 1024L / targetSpeed) - elapsedMs
                 if (sleepTime > 0) {
+                    println("sleeping for $sleepTime ms")
                     Thread.sleep(sleepTime)
                 }
             }
         }
     } finally {
+        speedPublishingTimer?.cancel()
         finishCallback?.invoke(totalReadBytes, totalWriteBytes)
     }
 }
