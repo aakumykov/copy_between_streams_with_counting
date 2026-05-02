@@ -23,7 +23,6 @@ import com.github.aakumykov.storage_access_helper.StorageAccessHelper
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.roundToInt
@@ -36,10 +35,44 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
     private val fileSelector: FileSelector<SimpleSortingMode> get() = LocalFileSelector().prepare()
 
     private var selectedFSItem: FSItem? = null
-    private var currentJob: Job? = null
 
     private val requiredSpeedBytePerSecond: Long get() = 1000
-    private val stringBuilder: StringBuilder by lazy { StringBuilder() }
+
+    private fun onCopyFileLocallyButtonClicked() {
+
+        val sourceFile = File(selectedFSItem!!.absolutePath)
+        val targetFile = File(cacheDir, "output.file")
+
+        val ceh = CoroutineExceptionHandler { _, throwable ->
+            showError(throwable)
+            hideProgressBar()
+        }
+
+        lifecycleScope.launch {
+
+            showProgressBar(true)
+
+            launch (Dispatchers.IO + ceh) {
+                sourceFile.inputStream().use { inputStream ->
+                    targetFile.outputStream().use { fileOutputStream ->
+                        copyBetweenStreamsWithCounting(
+                            inputStream = inputStream,
+                            outputStream = fileOutputStream,
+                            requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
+                            speedCallback = {
+                                Log.d(TAG, "скорость: ${humanReadableByteCount(it.roundToLong())}")
+                            },
+                            afterWriteCallback = {
+                                Thread.sleep(500L)
+                            }
+                        )
+                    }
+                }
+            }.join()
+
+            hideProgressBar()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,53 +114,7 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
         }
     }
 
-    private fun onCopyFileLocallyButtonClicked() {
 
-        val sourceFile = File(selectedFSItem!!.absolutePath)
-        val targetFile = File(cacheDir, "output.file")
-
-        val ceh = CoroutineExceptionHandler { _, throwable ->
-            showError(throwable)
-            hideProgressBar()
-            currentJob = null
-        }
-
-        currentJob = lifecycleScope.launch {
-
-            showProgressBar(true)
-            stringBuilder.clear()
-
-            launch (Dispatchers.IO + ceh) {
-                sourceFile.inputStream().use { inputStream ->
-                    targetFile.outputStream().use { fileOutputStream ->
-                        copyBetweenStreamsWithCounting(
-                            inputStream = inputStream,
-                            outputStream = fileOutputStream,
-                            requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
-                            speedCallback = {
-                                val humanSpeed = humanReadableByteCount(it.roundToLong())
-                                stringBuilder.append(humanSpeed)
-                                stringBuilder.append("\n")
-
-                                launch (Dispatchers.Main) {
-                                    binding.infoView.text = stringBuilder
-                                    binding.infoScrollView.fullScroll(View.FOCUS_DOWN)
-                                }
-
-                                Log.d(TAG, "скорость: $humanSpeed")
-                            },
-                            afterWriteCallback = {
-                                Thread.sleep(500L)
-                            }
-                        )
-                    }
-                }
-            }.join()
-
-            hideProgressBar()
-            currentJob = null
-        }
-    }
 
     private fun selectAFile() {
         fileSelector.display(this, this)
