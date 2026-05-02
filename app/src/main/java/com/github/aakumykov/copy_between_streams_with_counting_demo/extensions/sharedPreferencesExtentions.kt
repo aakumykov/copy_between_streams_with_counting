@@ -1,4 +1,4 @@
-package com.github.aakumykov.copy_between_streams_with_counting_demo.utils
+package com.github.aakumykov.copy_between_streams_with_counting_demo.extensions
 
 import android.app.Activity
 import androidx.core.content.edit

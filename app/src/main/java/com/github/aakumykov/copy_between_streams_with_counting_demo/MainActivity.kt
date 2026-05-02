@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
             launch (Dispatchers.IO + ceh) {
                 sourceFile.inputStream().use { inputStream ->
                     targetFile.outputStream().use { fileOutputStream ->
-                        copyBetweenStreamsWithCounting(
+                        copyBetweenStreamsWithCounting2(
                             inputStream = inputStream,
                             outputStream = fileOutputStream,
                             requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
