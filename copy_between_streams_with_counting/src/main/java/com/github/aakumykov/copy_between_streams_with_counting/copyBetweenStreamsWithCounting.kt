@@ -24,7 +24,7 @@ import java.io.OutputStream
 v0.0.11-alpha
  */
 @Throws(IOException::class)
-fun copyBetweenStreamsWithCounting2(
+fun copyBetweenStreamsWithCounting(
     inputStream: InputStream,
     outputStream: OutputStream,
     requiredSpeedBytesPerSecond: Supplier<Long> = Supplier { -1 },
