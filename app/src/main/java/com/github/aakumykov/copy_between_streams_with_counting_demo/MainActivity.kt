@@ -11,8 +11,8 @@ import androidx.lifecycle.lifecycleScope
 import com.github.aakumykov.copy_between_streams_with_counting.copyBetweenStreamsWithCounting
 import com.github.aakumykov.copy_between_streams_with_counting_demo.databinding.ActivityMainBinding
 import com.github.aakumykov.copy_between_streams_with_counting_demo.extensions.getStringFromPreferences
-import com.github.aakumykov.copy_between_streams_with_counting_demo.utils.humanReadableByteCount
 import com.github.aakumykov.copy_between_streams_with_counting_demo.extensions.storeStringInPreferences
+import com.github.aakumykov.copy_between_streams_with_counting_demo.utils.humanReadableByteCount
 import com.github.aakumykov.file_lister_navigator_selector.extensions.errorMsg
 import com.github.aakumykov.file_lister_navigator_selector.file_lister.SimpleSortingMode
 import com.github.aakumykov.file_lister_navigator_selector.file_selector.FileSelector
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
     private var selectedFSItem: FSItem? = null
     private var currentJob: Job? = null
 
-    private val requiredSpeedBytePerSecond: Long get() = 1000
+    private val requiredSpeedBytePerSecond: Long get() = 1024 * 1024
     private val perStepSleepMs: Long = 10
     private val stringBuilder: StringBuilder by lazy { StringBuilder() }
 
@@ -65,22 +65,22 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
                         copyBetweenStreamsWithCounting(
                             inputStream = inputStream,
                             outputStream = fileOutputStream,
-                            requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
+                            /*requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
                             speedCallback = {
                                 val humanSpeed = humanReadableByteCount(it.roundToLong())
                                 stringBuilder.append(humanSpeed)
                                 stringBuilder.append("\n")
 
-                                launch (Dispatchers.Main) {
+                                *//*launch (Dispatchers.Main) {
                                     binding.infoView.text = stringBuilder
                                     binding.infoScrollView.fullScroll(View.FOCUS_DOWN)
-                                }
+                                }*//*
 
                                 Log.d(TAG, "скорость: $humanSpeed")
                             },
                             afterWriteCallback = {
                                 Thread.sleep(perStepSleepMs)
-                            }
+                            }*/
                         )
                     }
                 }
