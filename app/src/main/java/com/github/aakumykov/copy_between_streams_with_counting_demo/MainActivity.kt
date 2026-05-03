@@ -65,20 +65,22 @@ class MainActivity : AppCompatActivity(), FileSelector.Callbacks {
                         copyBetweenStreamsWithCounting(
                             inputStream = inputStream,
                             outputStream = fileOutputStream,
-                            /*requiredSpeedBytesPerSecond = { requiredSpeedBytePerSecond },
-                            speedCallback = {
+                            /*requiredSpeedBytesPerSecond = {
+                                requiredSpeedBytePerSecond
+                            },*/
+                            /*speedCallback = {
                                 val humanSpeed = humanReadableByteCount(it.roundToLong())
                                 stringBuilder.append(humanSpeed)
                                 stringBuilder.append("\n")
 
-                                *//*launch (Dispatchers.Main) {
-                                    binding.infoView.text = stringBuilder
-                                    binding.infoScrollView.fullScroll(View.FOCUS_DOWN)
-                                }*//*
+//                                launch (Dispatchers.Main) {
+//                                    binding.infoView.text = stringBuilder
+//                                    binding.infoScrollView.fullScroll(View.FOCUS_DOWN)
+//                                }
 
                                 Log.d(TAG, "скорость: $humanSpeed")
-                            },
-                            afterWriteCallback = {
+                            },*/
+                            /*afterWriteCallback = {
                                 Thread.sleep(perStepSleepMs)
                             }*/
                         )
